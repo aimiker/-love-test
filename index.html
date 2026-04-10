@@ -1,640 +1,871 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>单向深渊：个人情感烈度测算系统</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #050507;
-            --card-bg: rgba(15, 15, 18, 0.85);
-            --primary: #c43c3c;
-            --primary-hover: #e04a4a;
-            --text-main: #d1d1d1;
-            --text-muted: #666666;
-            --glass-border: rgba(255, 255, 255, 0.06);
-            --accent-glow: rgba(196, 60, 60, 0.15);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>深海恋温测试</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #0a0e27;
+    color: #e0e8ff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-        body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 0%, var(--accent-glow), transparent 70%);
-            font-family: 'Inter', 'Noto Serif SC', serif;
-            color: var(--text-main);
-            line-height: 1.7;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
+  #particles-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+  }
 
-        .container {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            width: 100%;
-        }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 460px; margin: 0 auto;
+    padding: 20px 16px 40px; min-height: 100vh;
+  }
 
-        /* 顶部进度条 */
-        .progress-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 3px;
-            background: rgba(255,255,255,0.03); z-index: 100;
-        }
-        .progress-bar {
-            height: 100%; background: var(--primary);
-            width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 12px var(--primary);
-        }
-        .progress-text {
-            position: fixed; top: 15px; right: 20px;
-            font-family: 'Inter', sans-serif; font-size: 0.8rem;
-            color: var(--text-muted); letter-spacing: 2px;
-            transition: color 0.3s;
-        }
+  /* 顶部导航 */
+  .top-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0 12px;
+  }
+  .home-btn {
+    display: flex; align-items: center; gap: 4px;
+    background: none; border: none; color: #4a5a82;
+    font-size: 13px; cursor: pointer; padding: 6px 10px;
+    border-radius: 8px; transition: all 0.3s;
+  }
+  .home-btn:hover { color: #4fc3f7; background: rgba(79,195,247,0.08); }
+  .home-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .auto-save-tag { font-size: 12px; color: #4a5a82; }
 
-        /* 屏幕切换逻辑 */
-        .screen {
-            display: none; opacity: 0; transform: translateY(15px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .screen.active {
-            display: block; opacity: 1; transform: translateY(0);
-        }
+  /* 开始页 */
+  .start-page {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 90vh; text-align: center;
+    animation: fadeIn 1s ease;
+  }
+  .start-page .deep-icon {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4fc3f7, #0288d1, #01579b);
+    margin-bottom: 30px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(79,195,247,0.3), 0 0 80px rgba(2,136,209,0.15);
+    animation: pulse 3s ease-in-out infinite;
+  }
+  .deep-icon svg { width: 50px; height: 50px; fill: #fff; opacity: 0.9; }
+  .start-page h1 {
+    font-size: 28px; font-weight: 700; margin-bottom: 12px;
+    background: linear-gradient(135deg, #4fc3f7, #e0e8ff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .start-page .subtitle {
+    font-size: 14px; color: #7b8cb8; margin-bottom: 40px; line-height: 1.6;
+  }
+  .start-buttons {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    width: 100%; max-width: 260px;
+  }
+  .start-btn {
+    padding: 14px 48px; border: none; border-radius: 30px;
+    background: linear-gradient(135deg, #0288d1, #4fc3f7);
+    color: #fff; font-size: 17px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s; box-shadow: 0 4px 20px rgba(2,136,209,0.4);
+    letter-spacing: 1px; width: 100%;
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(2,136,209,0.5); }
+  .continue-btn {
+    padding: 14px 48px; border: 2px solid rgba(79,195,247,0.4); border-radius: 30px;
+    background: rgba(79,195,247,0.08); color: #4fc3f7; font-size: 17px;
+    font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; letter-spacing: 1px;
+  }
+  .continue-btn:hover { background: rgba(79,195,247,0.15); border-color: rgba(79,195,247,0.6); }
+  .continue-hint { font-size: 12px; color: #4a5a82; margin-top: -4px; }
+  .start-note { margin-top: 20px; font-size: 12px; color: #4a5a82; }
 
-        /* 欢迎屏 */
-        .welcome-screen { text-align: center; }
-        .title-main {
-            font-size: 2.8rem; color: #fff; font-weight: 900;
-            letter-spacing: 6px; margin-bottom: 20px;
-            text-shadow: 0 0 30px var(--accent-glow);
-        }
-        .subtitle { color: var(--text-muted); font-size: 1rem; margin-bottom: 60px; line-height: 1.9; }
-        
-        .btn {
-            background: transparent; color: var(--primary);
-            border: 1px solid var(--primary); padding: 16px 45px;
-            font-family: 'Noto Serif SC', serif; font-size: 1.1rem;
-            border-radius: 4px; cursor: pointer; transition: 0.4s;
-            letter-spacing: 3px; position: relative; overflow: hidden;
-        }
-        .btn:hover {
-            background: var(--primary); color: #fff;
-            box-shadow: 0 0 25px var(--accent-glow);
-        }
+  /* 历史记录 */
+  .history-section { width: 100%; max-width: 340px; margin-top: 32px; }
+  .history-title { font-size: 13px; color: #4a5a82; margin-bottom: 12px; letter-spacing: 1px; text-align: center; }
+  .history-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; transition: all 0.3s;
+  }
+  .history-card:hover { background: rgba(79,195,247,0.06); border-color: rgba(79,195,247,0.15); }
+  .history-left { display: flex; flex-direction: column; gap: 4px; }
+  .history-level { font-size: 15px; font-weight: 600; color: #e0e8ff; }
+  .history-date { font-size: 12px; color: #4a5a82; }
+  .history-temp { font-size: 22px; font-weight: 700; color: #4fc3f7; }
+  .history-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: center; }
+  .history-clear-btn {
+    background: none; border: 1px solid rgba(255,255,255,0.08); color: #4a5a82;
+    font-size: 12px; padding: 4px 14px; border-radius: 12px; cursor: pointer; transition: all 0.3s;
+  }
+  .history-clear-btn:hover { color: #ef5350; border-color: rgba(239,83,80,0.3); }
 
-        /* 题目屏 */
-        .q-card {
-            background: var(--card-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border); border-radius: 16px;
-            padding: 50px 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-        }
-        
-        /* 头部：包含题号和返回按钮 */
-        .q-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 15px;
-        }
-        .q-num {
-            font-size: 0.85rem; color: var(--primary); letter-spacing: 2px;
-            font-family: 'Inter', sans-serif;
-        }
-        .back-btn {
-            background: transparent; border: none; color: var(--text-muted);
-            font-family: 'Noto Serif SC', serif; font-size: 0.85rem;
-            cursor: pointer; transition: color 0.3s; padding: 5px 10px;
-            letter-spacing: 1px; display: none; /* 默认隐藏，第一题不显示 */
-        }
-        .back-btn:hover { color: var(--primary); }
+  /* 答题页 */
+  .quiz-page { display: none; animation: fadeIn 0.5s ease; }
+  .quiz-page.active { display: block; }
+  .progress-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #01579b, #4fc3f7); border-radius: 2px; transition: width 0.5s ease; }
+  .progress-text { text-align: center; font-size: 12px; color: #4a5a82; margin-bottom: 24px; }
+  .depth-indicator { text-align: center; margin-bottom: 20px; font-size: 12px; color: #4fc3f7; letter-spacing: 2px; opacity: 0.7; }
+  .question-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px; padding: 28px 20px; margin-bottom: 16px; backdrop-filter: blur(10px);
+  }
+  .question-text { font-size: 17px; line-height: 1.7; font-weight: 500; margin-bottom: 24px; color: #e0e8ff; }
+  .question-dim {
+    display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 10px;
+    margin-bottom: 14px; background: rgba(79,195,247,0.12); color: #4fc3f7;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    width: 100%; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; background: rgba(255,255,255,0.03); color: #c0c8e8;
+    font-size: 15px; line-height: 1.5; text-align: left; cursor: pointer;
+    transition: all 0.3s; display: flex; align-items: flex-start; gap: 10px;
+  }
+  .option-btn:hover { background: rgba(79,195,247,0.08); border-color: rgba(79,195,247,0.2); color: #e0e8ff; }
+  .option-btn.selected { background: rgba(79,195,247,0.12); border-color: rgba(79,195,247,0.4); color: #fff; box-shadow: 0 0 20px rgba(79,195,247,0.1); }
+  .option-label {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2); display: flex; align-items: center;
+    justify-content: center; font-size: 12px; margin-top: 1px; transition: all 0.3s;
+  }
+  .option-btn.selected .option-label { background: #4fc3f7; border-color: #4fc3f7; color: #0a0e27; font-weight: 700; }
+  .nav-area { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; gap: 12px; }
+  .nav-btn {
+    padding: 12px 28px; border: 1px solid rgba(79,195,247,0.3); border-radius: 25px;
+    background: transparent; color: #4fc3f7; font-size: 15px; cursor: pointer; transition: all 0.3s;
+  }
+  .nav-btn:hover { background: rgba(79,195,247,0.1); }
+  .nav-btn.primary { background: linear-gradient(135deg, #0288d1, #4fc3f7); border: none; color: #fff; font-weight: 600; box-shadow: 0 4px 16px rgba(2,136,209,0.3); }
+  .nav-btn.primary:hover { box-shadow: 0 6px 24px rgba(2,136,209,0.4); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .q-text { font-size: 1.25rem; font-weight: 600; color: #fff; margin-bottom: 35px; line-height: 1.7; }
-        
-        .options { display: flex; flex-direction: column; gap: 14px; }
-        .opt-btn {
-            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
-            padding: 20px 24px; border-radius: 8px; cursor: pointer;
-            text-align: left; color: #aaa; font-size: 0.95rem;
-            transition: all 0.3s ease; line-height: 1.6; position: relative;
-            opacity: 0; transform: translateY(10px);
-        }
-        .opt-btn:hover {
-            background: rgba(196, 60, 60, 0.05); border-color: var(--primary);
-            color: #fff; padding-left: 30px;
-        }
-        .opt-key {
-            display: inline-block; background: rgba(255,255,255,0.1);
-            color: var(--text-muted); font-family: 'Inter', sans-serif;
-            font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;
-            margin-right: 10px;
-        }
+  /* 结果页 */
+  .result-page { display: none; animation: fadeIn 1s ease; text-align: center; padding-top: 20px; }
+  .result-page.active { display: block; }
+  .thermometer-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; }
+  .temp-display {
+    font-size: 64px; font-weight: 800;
+    background: linear-gradient(135deg, #4fc3f7, #e0e8ff, #ff8a80);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 4px; line-height: 1; letter-spacing: -2px;
+  }
+  .temp-unit { font-size: 20px; color: #7b8cb8; margin-bottom: 16px; }
+  .thermometer-bar { width: 200px; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+  .thermometer-fill { height: 100%; border-radius: 4px; transition: width 2s ease; width: 0%; }
+  .thermo-labels { display: flex; justify-content: space-between; width: 200px; font-size: 10px; color: #4a5a82; }
+  .level-badge { display: inline-block; padding: 8px 24px; border-radius: 20px; font-size: 18px; font-weight: 700; margin-bottom: 8px; letter-spacing: 2px; }
+  .level-subtitle { font-size: 13px; color: #7b8cb8; margin-bottom: 28px; }
+  .dimension-section { margin-bottom: 28px; text-align: left; }
+  .dimension-section h3 { font-size: 15px; color: #7b8cb8; margin-bottom: 16px; text-align: center; letter-spacing: 1px; }
+  .dim-item { display: flex; align-items: center; margin-bottom: 12px; gap: 12px; }
+  .dim-label { width: 70px; font-size: 13px; color: #7b8cb8; text-align: right; flex-shrink: 0; }
+  .dim-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+  .dim-bar-fill { height: 100%; border-radius: 3px; transition: width 1.5s ease; }
+  .dim-score { width: 36px; font-size: 13px; color: #4fc3f7; flex-shrink: 0; }
+  .result-desc {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 22px 18px; margin-bottom: 24px;
+    text-align: left; line-height: 1.8; font-size: 14px; color: #a0b0d0;
+  }
+  .result-desc strong { color: #e0e8ff; }
+  .insight-title { font-size: 15px; font-weight: 600; color: #4fc3f7; margin-bottom: 10px; text-align: center; }
+  .insight-box {
+    background: rgba(79,195,247,0.05); border: 1px solid rgba(79,195,247,0.1);
+    border-radius: 14px; padding: 22px 18px; margin-bottom: 24px;
+    text-align: left; line-height: 1.8; font-size: 14px; color: #a0b0d0;
+  }
+  .result-btn-group { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; margin-bottom: 30px; }
+  .restart-btn {
+    padding: 12px 36px; border: 1px solid rgba(79,195,247,0.3); border-radius: 25px;
+    background: transparent; color: #4fc3f7; font-size: 15px; cursor: pointer; transition: all 0.3s;
+  }
+  .restart-btn:hover { background: rgba(79,195,247,0.1); }
+  .share-hint { font-size: 12px; color: #4a5a82; margin-bottom: 20px; }
 
-        /* 选项浮现动画 */
-        .animate-in { animation: fadeUp 0.4s ease forwards; }
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 40px rgba(79,195,247,0.3), 0 0 80px rgba(2,136,209,0.15); } 50% { box-shadow: 0 0 50px rgba(79,195,247,0.4), 0 0 100px rgba(2,136,209,0.2); } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .float-anim { animation: float 4s ease-in-out infinite; }
 
-        /* 加载屏 */
-        .loading-screen { text-align: center; }
-        .spinner {
-            width: 40px; height: 40px; border: 2px solid var(--glass-border);
-            border-top-color: var(--primary); border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite; margin: 0 auto 30px auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { font-family: 'Inter', monospace; color: var(--primary); font-size: 0.9rem; letter-spacing: 2px; }
-
-        /* 结果屏 */
-        .result-screen { padding-bottom: 60px; }
-        .res-temp { font-family: 'Inter', sans-serif; font-size: 1.2rem; color: var(--text-muted); text-align: center; letter-spacing: 4px; margin-bottom: 10px; }
-        .res-level { font-size: 2.8rem; color: #fff; text-align: center; margin-bottom: 15px; text-shadow: 0 0 40px var(--accent-glow); font-weight: 900; }
-        .res-quote { text-align: center; color: var(--primary); font-style: italic; margin-bottom: 50px; font-size: 1.1rem; }
-        .chart-container { max-width: 420px; margin: 0 auto 50px auto; position: relative; }
-        
-        .analysis-block { margin-bottom: 40px; background: rgba(0,0,0,0.2); padding: 30px; border-radius: 12px; border-left: 2px solid var(--primary); }
-        .analysis-title { color: #fff; font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .typewriter-text { color: #aaa; line-height: 1.9; font-size: 0.95rem; min-height: 80px; }
-        
-        .cursor::after { content: ' █'; animation: blink 1s step-start infinite; color: var(--primary); font-size: 0.8em;}
-        @keyframes blink { 50% { opacity: 0; } }
-
-        @media (max-width: 600px) {
-            .q-card { padding: 40px 20px; }
-            .q-text { font-size: 1.15rem; }
-            .title-main { font-size: 2.2rem; }
-            .res-level { font-size: 2.2rem; }
-            .opt-btn { padding: 16px 20px; }
-            .opt-key { display: none; /* 移动端隐藏键盘提示 */ }
-        }
-    </style>
+  @media (max-width: 380px) {
+    .question-text { font-size: 15.5px; }
+    .option-btn { font-size: 14px; padding: 12px 14px; }
+    .temp-display { font-size: 54px; }
+  }
+</style>
 </head>
 <body>
-
-<div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
-<div class="progress-text" id="progressText"></div>
-
+<canvas id="particles-canvas"></canvas>
 <div class="container">
-    <div id="screen-welcome" class="screen active welcome-screen">
-        <h1 class="title-main">单向深渊</h1>
-        <p class="subtitle">这是一场极其私密的向内挖掘。<br>抛开一切道德与伪装，直视你内心最真实的残忍与狂热。<br>从绝对免疫到致命核爆，你对TA的爱，究竟处于哪个层级？<br><br><span style="font-size: 0.85rem; color: #555;">(支持键盘数字键 1-4 快捷答题)</span></p>
-        <button class="btn" onclick="startTest()">剥离防线 · 开始测算</button>
+
+  <!-- 开始页 -->
+  <div class="start-page" id="startPage">
+    <div class="deep-icon float-anim">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
     </div>
-
-    <div id="screen-question" class="screen">
-        <div class="q-card">
-            <div class="q-header">
-                <div class="q-num" id="questionNum">Q.01</div>
-                <button class="back-btn" id="backBtn" onclick="goBack()">✦ 返回上一题</button>
-            </div>
-            <div class="q-text" id="questionText">加载中...</div>
-            <div class="options" id="optionsContainer"></div>
-        </div>
+    <h1>深海恋温测试</h1>
+    <p class="subtitle">
+      26道深海探测 · 测量你们之间的真实温度<br>
+      <span style="font-size:12px; opacity:0.6">不是所有选项都如它看起来那样</span>
+    </p>
+    <div class="start-buttons">
+      <button class="start-btn" onclick="startQuiz(true)">开始潜入深海</button>
+      <button class="continue-btn" id="continueBtn" style="display:none" onclick="startQuiz(false)">继续上次测试</button>
+      <p class="continue-hint" id="continueHint" style="display:none"></p>
     </div>
-
-    <div id="screen-loading" class="screen loading-screen">
-        <div class="spinner"></div>
-        <div class="loading-text" id="loadingText">正在计算心理防线坍塌程度...</div>
+    <p class="start-note">约需 5-8 分钟 · 请凭真实感受作答</p>
+    <div class="history-section" id="historySection" style="display:none">
+      <div class="history-title">📋 历史测试记录</div>
+      <div id="historyList"></div>
+      <div class="history-actions">
+        <button class="history-clear-btn" onclick="clearHistory()">清除全部记录</button>
+      </div>
     </div>
+  </div>
 
-    <div id="screen-result" class="screen result-screen">
-        <div class="res-temp" id="resTemp"></div>
-        <div class="res-level" id="resTitle"></div>
-        <div class="res-quote" id="resQuote"></div>
-        
-        <div class="chart-container"><canvas id="radarChart"></canvas></div>
-
-        <div class="analysis-block">
-            <div class="analysis-title">✦ 潜意识画像 (STATE)</div>
-            <div class="typewriter-text" id="textDesc"></div>
-        </div>
-        <div class="analysis-block">
-            <div class="analysis-title">✦ 毁灭与阴影 (SHADOW)</div>
-            <div class="typewriter-text" id="textShadow"></div>
-        </div>
-        <div style="text-align: center; margin-top: 60px;">
-            <button class="btn" style="font-size: 0.9rem; padding: 12px 35px;" onclick="location.reload()">重新观测</button>
-        </div>
+  <!-- 答题页 -->
+  <div class="quiz-page" id="quizPage">
+    <div class="top-nav">
+      <button class="home-btn" onclick="goHome()">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        首页
+      </button>
+      <span class="auto-save-tag" id="autoSaveHint">自动保存中</span>
     </div>
-</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 26</div>
+    <div class="depth-indicator" id="depthIndicator">▼ 海面层 · 0m</div>
+    <div class="question-card">
+      <div class="question-dim" id="questionDim"></div>
+      <div class="question-text" id="questionText"></div>
+      <div class="options" id="optionsArea"></div>
+    </div>
+    <div class="nav-area">
+      <button class="nav-btn" id="prevBtn" onclick="prevQuestion()" disabled>上一题</button>
+      <button class="nav-btn primary" id="nextBtn" onclick="nextQuestion()" disabled>下一题</button>
+    </div>
+  </div>
 
-<script>
-    // 32道无重复深度题目
-    const questions = [
-        // --- 维度一：自我溶解 (Ego) ---
-        { dim: "ego", q: "如果你心中一直有一个极其骄傲、绝不向任何人低头的底线，但在TA面前：", opts: [
-            { text: "底线依然是底线，谁也不能让我妥协。", s: 1 },
-            { text: "会偶尔软化，但事后会觉得有点委屈和不甘。", s: 2 },
-            { text: "这根底线不知不觉中已经被TA推后了很远。", s: 3 },
-            { text: "只要能留住TA，自尊心随时可以踩碎在脚下。", s: 4 }
-        ]},
-        { dim: "ego", q: "如果有一个绝佳的机会能让你实现人生最大的理想，代价是永远离开TA：", opts: [
-            { text: "毫不犹豫选择理想，人生的主角只能是自己。", s: 1 },
-            { text: "会极度痛苦地纠结，但最终大概率走向理想。", s: 2 },
-            { text: "很有可能会放弃理想，选择留在TA身边。", s: 3 },
-            { text: "毫无留恋地放弃理想。没有TA的世界，任何成就都形同废土。", s: 4 }
-        ]},
-        { dim: "ego", q: "当你的核心价值观与TA产生严重冲突时，你的第一反应是：", opts: [
-            { text: "觉得不可理喻，立刻产生疏离感。", s: 1 },
-            { text: "各自保留意见，避免讨论这个话题。", s: 2 },
-            { text: "试图去理解TA，并在内心产生动摇。", s: 3 },
-            { text: "直接抛弃自己过去的信仰，将TA的观念内化为新的真理。", s: 4 }
-        ]},
-        { dim: "ego", q: "为了满足TA的一个看似无理的物质或情感要求，你愿意付出的代价是：", opts: [
-            { text: "直接拒绝，我只做合理的事。", s: 1 },
-            { text: "在我完全游刃有余的范围内给予满足。", s: 2 },
-            { text: "愿意稍微透支一点自己来让TA开心。", s: 3 },
-            { text: "倾其所有，甚至背负巨大代价，只要TA想要。", s: 4 }
-        ]},
-        { dim: "ego", q: "如果在众人面前，TA无意中让你陷入了极其丢脸、自尊受挫的境地：", opts: [
-            { text: "绝对无法忍受，当场发作或立刻冷战。", s: 1 },
-            { text: "强忍着不发作，但心里已经给TA记了一笔重账。", s: 2 },
-            { text: "觉得尴尬，但事后听TA解释就能释怀。", s: 3 },
-            { text: "甚至觉得只要是TA给的难堪，我也能咽下去并为TA找借口。", s: 4 }
-        ]},
-        { dim: "ego", q: "你原本是一个极度需要个人空间的人，但现在面对TA的介入：", opts: [
-            { text: "依然严格保持物理和心理的距离。", s: 1 },
-            { text: "允许部分介入，但必须有我自己独处的红线。", s: 2 },
-            { text: "经常主动让渡空间给TA，渐渐习惯陪伴。", s: 3 },
-            { text: "巴不得TA能24小时占据我的空间，独处反而成了一种煎熬。", s: 4 }
-        ]},
-        { dim: "ego", q: "如果你发现自己为了迎合TA，变得连以前的朋友都不认识你了：", opts: [
-            { text: "立刻警醒，迅速找回原本的自己。", s: 1 },
-            { text: "感到一阵恐慌，试图找回平衡。", s: 2 },
-            { text: "有一点迷茫，但觉得为了爱改变也值得。", s: 3 },
-            { text: "一种病态的满足感——看，我连自己都杀死了，只为成为TA需要的人。", s: 4 }
-        ]},
-        { dim: "ego", q: "面对TA极其离谱的错误，只要TA向你示弱或请求原谅：", opts: [
-            { text: "对错分明，绝不会因为示弱就翻篇。", s: 1 },
-            { text: "需要很长时间的考察才可能原谅。", s: 2 },
-            { text: "心容易软，很快就会妥协。", s: 3 },
-            { text: "毫无抵抗力。哪怕TA刚开了一枪，只要TA说一句抱歉，我就敢把枪再递回去。", s: 4 }
-        ]},
+  <!-- 结果页 -->
+  <div class="result-page" id="resultPage">
+    <div class="top-nav">
+      <button class="home-btn" onclick="goHome()">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        首页
+      </button>
+    </div>
+    <div class="thermometer-wrap">
+      <div class="temp-display" id="tempDisplay">0</div>
+      <div class="temp-unit">恋爱深海温度 °L</div>
+      <div class="thermometer-bar"><div class="thermometer-fill" id="thermoFill"></div></div>
+      <div class="thermo-labels"><span>0°</span><span>50°</span><span>100°</span></div>
+    </div>
+    <div class="level-badge" id="levelBadge"></div>
+    <div class="level-subtitle" id="levelSubtitle"></div>
+    <div class="dimension-section">
+      <h3>四维深海图谱</h3>
+      <div class="dim-item">
+        <span class="dim-label">情感浓度</span>
+        <div class="dim-bar"><div class="dim-bar-fill" id="dimI" style="background:linear-gradient(90deg,#4fc3f7,#81d4fa)"></div></div>
+        <span class="dim-score" id="dimIScore"></span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-label">唯一认知</span>
+        <div class="dim-bar"><div class="dim-bar-fill" id="dimS" style="background:linear-gradient(90deg,#ab47bc,#ce93d8)"></div></div>
+        <span class="dim-score" id="dimSScore"></span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-label">亲密信任</span>
+        <div class="dim-bar"><div class="dim-bar-fill" id="dimT" style="background:linear-gradient(90deg,#26a69a,#80cbc4)"></div></div>
+        <span class="dim-score" id="dimTScore"></span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-label">关系承诺</span>
+        <div class="dim-bar"><div class="dim-bar-fill" id="dimC" style="background:linear-gradient(90deg,#ef5350,#ef9a9a)"></div></div>
+        <span class="dim-score" id="dimCScore"></span>
+      </div>
+    </div>
+    <div class="result-desc" id="resultDesc"></div>
+    <div class="insight-title">🔍 深海洞察</div>
+    <div class="insight-box" id="insightBox"></div>
+    <p class="share-hint">截图分享给TA，看看TA测出多少度 💙</p>
+    <div class="result-btn-group">
+      <button class="restart-btn" onclick="restart()">重新测试</button>
+    </div>
+  </div>
 
-        // --- 维度二：意念穿透 (Obsess) ---
-        { dim: "obsess", q: "当你处于极其忙碌、高压的工作或学习状态中时，关于TA的念头：", opts: [
-            { text: "被完美屏蔽，我能绝对专注做自己的事。", s: 1 },
-            { text: "只有在休息的间隙，大脑放空时才会想起。", s: 2 },
-            { text: "会时不时闪现，成为我枯燥抗压时的慰藉。", s: 3 },
-            { text: "像不可控的病毒，即使再忙，底层的神经依然被TA牵动，导致分心甚至焦虑。", s: 4 }
-        ]},
-        { dim: "obsess", q: "如果你看到TA在社交软件上给一个极其优秀的异性点赞、频繁互动：", opts: [
-            { text: "完全无感，觉得只是正常的社交。", s: 1 },
-            { text: "微微有点酸，但瞬间就自我消化了。", s: 2 },
-            { text: "忍不住去视奸那个异性的主页，心里开始患得患失。", s: 3 },
-            { text: "瞬间被剥夺氧气，产生极度的嫉妒、破坏欲甚至躯体上的心悸。", s: 4 }
-        ]},
-        { dim: "obsess", q: "发给TA一条信息后，如果超过两小时没有回复：", opts: [
-            { text: "根本不会注意，我去忙别的了。", s: 1 },
-            { text: "看一眼手机，心想TA应该在忙。", s: 2 },
-            { text: "开始频繁切回聊天界面查看，情绪逐渐低落。", s: 3 },
-            { text: "脑海中上演一万种灾难片，什么事都做不下去，陷入彻底的戒断反应。", s: 4 }
-        ]},
-        { dim: "obsess", q: "当你在外面独自遇到极其美丽的风景或吃到绝妙的美食时，你的第一感觉是：", opts: [
-            { text: "单纯享受当下自己的时光。", s: 1 },
-            { text: "拍个照发朋友圈记录下来。", s: 2 },
-            { text: "第一时间想分享给TA看。", s: 3 },
-            { text: "一种强烈的刺痛感——因为TA不在身边，这种美好本身变成了一种折磨。", s: 4 }
-        ]},
-        { dim: "obsess", q: "深夜醒来，四下无人的时候，TA的身影出现在你脑海里的频率：", opts: [
-            { text: "几乎没有，我闭眼接着睡。", s: 1 },
-            { text: "偶尔会梦到或想起，像掠过一阵风。", s: 2 },
-            { text: "经常想起，伴随着思念的叹息。", s: 3 },
-            { text: "每一次深夜惊醒，第一秒涌入脑海的绝对是TA，带着近乎窒息的空虚感。", s: 4 }
-        ]},
-        { dim: "obsess", q: "当你无意间在街上听到别人提起与TA相同的名字时：", opts: [
-            { text: "内心毫无波澜，甚至都没注意到。", s: 1 },
-            { text: "觉得有点巧合而已。", s: 2 },
-            { text: "心里会“咯噔”一下，瞬间联想到TA。", s: 3 },
-            { text: "如同被电击穿，周围的声音瞬间静音，感官被极度放大。", s: 4 }
-        ]},
-        { dim: "obsess", q: "假设你们要去不同的城市，分开长达一个月，你的临行前状态是：", opts: [
-            { text: "觉得轻松，正好可以有自己的时间。", s: 1 },
-            { text: "正常告别，觉得一个月很快就过去了。", s: 2 },
-            { text: "十分不舍，提前安排好每天怎么联系。", s: 3 },
-            { text: "一种仿佛要生离死别般的焦躁和饥渴感，恨不得把TA变小装进口袋带走。", s: 4 }
-        ]},
-        { dim: "obsess", q: "关于探究TA的过去（前任、童年、秘密），你的真实欲望是：", opts: [
-            { text: "毫无兴趣，过去的事跟我无关。", s: 1 },
-            { text: "TA愿意说我就听，不刻意问。", s: 2 },
-            { text: "非常好奇，经常旁敲侧击地打听。", s: 3 },
-            { text: "一种近乎病态的掌控欲，想把TA过去每一秒的生命经历都剖开据为己有。", s: 4 }
-        ]},
+</div><script>
+const questions = [
+  {
+    id:1, dim:'I', dimLabel:'情感浓度',
+    text:'回忆上周——TA大概多少次自己"冒"进你脑海里？不是你刻意想，是自动出现的那种。',
+    options:[
+      {text:'偶尔两三次', score:{I:1}},
+      {text:'每天都会，一闪而过', score:{I:2}},
+      {text:'挺频繁的，有时会沉浸一会儿', score:{I:3}},
+      {text:'几乎无时无刻，吃饭走路发呆都是TA', score:{I:2}}
+    ]
+  },
+  {
+    id:2, dim:'I', dimLabel:'情感浓度',
+    text:'上一次经历开心的事，你第一时间的真实反应是什么？',
+    options:[
+      {text:'发了朋友圈或跟朋友分享', score:{I:1}},
+      {text:'想到TA了，但没急着说', score:{I:2}},
+      {text:'第一个告诉TA，而且TA的反应直接影响了我的开心程度', score:{I:2}},
+      {text:'不一定第一个说，但那个瞬间有种"TA在旁边就好了"的念头', score:{I:4}}
+    ]
+  },
+  {
+    id:3, dim:'I', dimLabel:'情感浓度',
+    text:'你有没有翻过TA的朋友圈/社交媒体历史记录？',
+    options:[
+      {text:'没有，不太感兴趣', score:{I:1}},
+      {text:'大概翻过一些，随意了解', score:{I:2}},
+      {text:'翻过，而且对某些内容（比如跟异性互动的）特别在意', score:{I:1}},
+      {text:'翻过，不是在查什么，就是想看看还没认识TA时TA过着什么样的生活', score:{I:4}}
+    ]
+  },
+  {
+    id:4, dim:'I', dimLabel:'情感浓度',
+    text:'跟TA在一起的时候，时间感会变吗？',
+    options:[
+      {text:'没什么特别感觉', score:{I:1}},
+      {text:'有点快，但分开后也不会特别难受', score:{I:2}},
+      {text:'在一起时觉得时间太快，分开后经常数着时间等下次见面', score:{I:2}},
+      {text:'在一起时确实觉得快，但偶尔也有安静各干各的时候，也不觉得浪费', score:{I:4}}
+    ]
+  },
+  {
+    id:5, dim:'I', dimLabel:'情感浓度',
+    text:'最近一次跟TA发生不愉快，你当时的第一个念头是什么？',
+    options:[
+      {text:'"算了，没什么大不了"——没有特别多情绪', score:{I:1}},
+      {text:'"TA怎么能这样？"——生气，觉得TA不对', score:{I:2}},
+      {text:'"是不是我哪里做得不好？"——先反思自己', score:{I:2}},
+      {text:'"好难受，但我想搞清楚到底怎么了"——不舒服，但没急着下结论', score:{I:4}}
+    ]
+  },
+  {
+    id:6, dim:'I', dimLabel:'情感浓度',
+    text:'如果TA突然需要你放弃一个你很在意的个人计划（比如一次旅行、一个重要的周末），你内心真实的反应是——',
+    options:[
+      {text:'会不情愿，大概率还是选自己的计划', score:{I:1}},
+      {text:'看情况，如果TA确实需要我，可以调整', score:{I:3}},
+      {text:'毫不犹豫就放弃了，TA比什么都重要', score:{I:2}},
+      {text:'内心会有一点矛盾，但会先了解TA为什么需要，再一起想办法', score:{I:4}}
+    ]
+  },
+  {
+    id:7, dim:'S', dimLabel:'唯一认知',
+    text:'你觉得TA身上有没有一种"只有TA是这样"的特质？',
+    options:[
+      {text:'好像没什么特别的，跟别人差不多', score:{S:1}},
+      {text:'有一些优点，但说不上独一无二', score:{S:2}},
+      {text:'有，TA是我见过最好/最特别的人，没有之一', score:{S:2}},
+      {text:'有，但不是"最好"那种——是一种我很难跟别人描述的东西，可能是说话方式、某个习惯、笑起来的样子', score:{S:4}}
+    ]
+  },
+  {
+    id:8, dim:'S', dimLabel:'唯一认知',
+    text:'如果一个各方面条件都比TA好的人追你，而且你们在一起还不算太久——你的真实想法是？',
+    options:[
+      {text:'会认真考虑，感情可以培养', score:{S:1}},
+      {text:'会有点动摇，但大概率不会换', score:{S:2}},
+      {text:'完全不会考虑，我的眼里只有TA', score:{S:3}},
+      {text:'会承认对方确实优秀，但心里清楚那不是一回事——"好"和"对"是两件事', score:{S:4}}
+    ]
+  },
+  {
+    id:9, dim:'S', dimLabel:'唯一认知',
+    text:'TA有没有什么缺点是你很清楚、但依然觉得"没关系"的？',
+    options:[
+      {text:'没太注意过TA的缺点', score:{S:1}},
+      {text:'有一些，有时候挺烦的', score:{S:2}},
+      {text:'有，但我选择包容——爱一个人就要接受全部', score:{S:2}},
+      {text:'有，而且我不觉得那是"包容"——那些东西就是TA的一部分，我不需要说服自己去接受', score:{S:4}}
+    ]
+  },
+  {
+    id:10, dim:'S', dimLabel:'唯一认知',
+   text:'你能不能用一句话说出TA跟你之前喜欢过的人最大的不同？',
+    options:[
+      {text:'说不太上来', score:{S:1}},
+      {text:'TA对我更好/更合适', score:{S:2}},
+      {text:'TA比之前的人都优秀', score:{S:1}},
+      {text:'跟之前的人不是一个类型的感觉——不是更好或更差，是完全不同的体验', score:{S:4}}
+    ]
+  },
+  {
+    id:11, dim:'S', dimLabel:'唯一认知',
+    text:'你有没有发现自己因为TA而改变了什么审美或偏好？比如开始听某种音乐、喜欢某种风格。',
+    options:[
+      {text:'没有，我还是我', score:{S:1}},
+      {text:'有一些，但我觉得是为了迎合TA', score:{S:2}},
+      {text:'有，而且是不知不觉发生的——后来才反应过来', score:{S:4}},
+      {text:'有，我在努力变成TA喜欢的样子', score:{S:1}}
+    ]
+  },
+  {
+    id:12, dim:'S', dimLabel:'唯一认知',
+    text:'你觉得TA能被"替代"吗？假设一个人性格、长相、三观都跟TA极度相似。',
+    options:[
+      {text:'理论上可以吧，感情本质上是条件匹配', score:{S:1}},
+      {text:'很难，但不是不可能', score:{S:2}},
+      {text:'不可能，TA就是TA', score:{S:3}},
+      {text:'这个假设本身就不成立——就算所有条件一样，那也不是TA，因为我们一起经历的那些东西没法复制', score:{S:4}}
+    ]
+  },
+  {
+    id:13, dim:'T', dimLabel:'亲密信任',
+    text:'TA知道你多少"不太好"的一面？比如你的自卑、懒惰、不太光彩的过去。',
+    options:[
+      {text:'基本不知道，我不想让TA看到那些', score:{T:1}},
+      {text:'知道一些，但核心的黑暗面我还是藏着', score:{T:2}},
+      {text:'我全告诉TA了，恋爱就不该有秘密', score:{T:2}},
+      {text:'TA知道一些重要的，有些是我主动说的，有些是TA自己察觉的——我没刻意藏，但也没刻意全部摊开', score:{T:4}}
+    ]
+  },
+  {
+    id:14, dim:'T', dimLabel:'亲密信任',
+    text:'你上一次在TA面前哭/示弱/说"我不行"，大概是什么时候？',
+    options:[
+      {text:'从来没有过', score:{T:1}},
+      {text:'有过，但很少，而且事后有点后悔暴露了那一面', score:{T:2}},
+      {text:'有过几次，TA的反应让我觉得是安全的', score:{T:4}},
+      {text:'经常，TA面前我可以完全放下防备', score:{T:3}}
+    ]
+  },
+  {
+    id:15, dim:'T', dimLabel:'亲密信任',
+    text:'你们有没有一些"只有我们俩知道"的东西——暗号、梗、只有你们懂的笑话？',
+    options:[
+      {text:'好像没有', score:{T:1}},
+      {text:'有一两个吧，但不常用', score:{T:2}},
+      {text:'有，而且时不时会冒出来，每次都觉得好笑/亲近', score:{T:4}},
+      {text:'有很多，我们有一整套自己的语言系统', score:{T:3}}
+    ]
+  },
+  {
+    id:16, dim:'T', dimLabel:'亲密信任',
+    text:'你跟TA之间，有没有"可以不说话但不尴尬"的时候？',
+    options:[
+      {text:'不说话我会有点紧张，想找话题', score:{T:1}},
+      {text:'偶尔可以，但大部分时候还是需要聊天来填充', score:{T:2}},
+      {text:'可以，但我更喜欢一直说话聊天', score:{T:2}},
+      {text:'经常有，一起各干各的，偶尔抬头看一眼，觉得挺好', score:{T:4}}
+    ]
+  },
+  {
+    id:17, dim:'T', dimLabel:'亲密信任',
+    text:'如果TA做了一件让你很受伤的事（不是原则性问题），你的恢复过程通常是——',
+    options:[
+      {text:'很快就过去了，懒得计较', score:{T:1}},
+      {text:'会难受一阵子，但自己消化，不一定告诉TA', score:{T:2}},
+      {text:'会直接说出来，如果TA不道歉我很难翻篇', score:{T:2}},
+      {text:'会难受，也会告诉TA，但不需要TA立刻修复——我知道有些事需要时间', score:{T:4}}
+    ]
+  },
+  {
+    id:18, dim:'T', dimLabel:'亲密信任',
+    text:'你信任TA到什么程度？选最接近的——',
+    options:[
+      {text:'TA说什么我不会全信，人嘛，都有保留', score:{T:1}},
+      {text:'大部分事情信，但涉及异性的话我会多留意', score:{T:2}},
+      {text:'完全信任，我相信TA不会骗我', score:{T:3}},
+      {text:'我信任TA，但不是盲信——是因为过去很多小事积累起来的，我见过TA怎么处理问题', score:{T:4}}
+    ]
+  },
+  {
+    id:19, dim:'C', dimLabel:'关系承诺',
+    text:'你想过跟TA的未来吗？想到多远？',
+    options:[
+      {text:'没怎么想过，过好当下吧', score:{C:1}},
+      {text:'想过，但比较模糊，"希望能一直在一起"那种', score:{C:2}},
+      {text:'想过很多——在哪里生活、要不要孩子、老了以后的样子', score:{C:3}},
+      {text:'想过，但不是规划型的——更像是偶尔闪过一个画面，比如"以后我们可能会一起逛菜市场"', score:{C:4}}
+    ]
+  },
+  {
+    id:20, dim:'C', dimLabel:'关系承诺',
+    text:'你们最近一次聊"我们以后"，是谁先提的？怎么聊的？',
+    options:[
+      {text:'好像没聊过这种话题', score:{C:1}},
+      {text:'聊过，通常是TA提的，我附和一下', score:{C:2}},
+      {text:'聊过，是我提的，我喜欢确认TA也有同样的打算', score:{C:2}},
+      {text:'不太记得谁先提的，因为这类话题是自然出现在对话里的', score:{C:4}}
+    ]
+  },
+  {
+    id:21, dim:'C', dimLabel:'关系承诺',
+    text:'如果你们遇到一个现实层面的大障碍（异地/家庭反对/经济压力），你真实的想法是——',
+    options:[
+      {text:'可能就算了，不想太辛苦', score:{C:1}},
+      {text:'会努力，但如果实在解决不了，也能接受分开', score:{C:3}},
+      {text:'不管什么障碍我都不会放手', score:{C:2}},
+      {text:'会很难受，但会先评估：这个障碍是可以一起扛的吗？如果是，我愿意扛', score:{C:4}}
+    ]
+  },
+  {
+    id:22, dim:'C', dimLabel:'关系承诺',
+    text:'你有没有想过"也许我们不一定能走到最后"？',
+    options:[
+      {text:'经常想，觉得感情这东西说不准', score:{C:1}},
+      {text:'没想过——我不允许自己想这个', score:{C:2}},
+      {text:'闪过几次，每次都会有点难受，然后更想对TA好', score:{C:4}},
+      {text:'从来没有过这种念头', score:{C:2}}
+    ]
+  },
+  {
+    id:23, dim:'C', dimLabel:'关系承诺',
+    text:'TA上一次让你失望，你之后做了什么？',
+    options:[
+      {text:'降低了对TA的期待，保护自己', score:{C:1}},
+      {text:'跟TA说了我的感受，但语气不太好', score:{C:2}},
+      {text:'没说，怕影响关系', score:{C:1}},
+      {text:'跟TA说了，也听了TA的说法——不一定马上释然，但至少我们都知道对方的感受', score:{C:4}}
+    ]
+  },
+  {
+    id:24, dim:'C', dimLabel:'关系承诺',
+    text:'如果有人问你"你为什么选择TA"，你能回答吗？',
+    options:[
+      {text:'不太说得上来，就觉得喜欢吧', score:{C:2}},
+      {text:'能列出几条：好看/有趣/对我好/三观合……', score:{C:2}},
+      {text:'能说出来，但总觉得说出来的不是最核心的——最核心的那个原因我自己也没完全想明白', score:{C:4}},
+      {text:'很清楚——因为TA是我遇到过最好的人', score:{C:1}}
+    ]
+  },
+  {
+    id:25, dim:'X', dimLabel:'深海情境',
+    text:'一个真实场景：TA跟你说了一件很私密的事（可能是家庭的、身体的、心理的），说完之后看着你。你的第一反应是——',
+    options:[
+      {text:'有点不知道该说什么，怕说错话', score:{I:2, T:1, S:1, C:1}},
+      {text:'认真听完，然后告诉TA"你能跟我说这些，我很高兴"', score:{I:2, T:3, S:2, C:3}},
+      {text:'心里很震动，忍不住抱了TA一下，什么都没说', score:{I:4, T:4, S:3, C:2}},
+      {text:'听完之后跟TA分享了自己类似的经历——想让TA知道"我也有过"', score:{I:3, T:3, S:2, C:3}}
+    ]
+  },
+  {
+    id:26, dim:'X', dimLabel:'深海情境',
+    text:'最后一道。你觉得"深爱一个人"最好的证据是什么？',
+    options:[
+      {text:'愿意为TA改变自己', score:{I:3, T:1, S:2, C:2}},
+      {text:'在所有人面前选TA', score:{I:2, T:2, S:3, C:3}},
+      {text:'TA不用开口你就知道TA需要什么', score:{I:2, T:3, S:3, C:2}},
+      {text:'知道TA所有的不好，看过关系里最难的部分，还是想跟TA在一起', score:{I:3, T:3, S:3, C:4}}
+    ]
+  }
+];
 
-        // --- 维度三：神性滤镜 (Halo) ---
-        { dim: "halo", q: "在理智冷静的深夜，你如何客观评价TA的那些明显缺点？", opts: [
-            { text: "看得很清楚，甚至经常因此觉得下头。", s: 1 },
-            { text: "觉得那是可以忍受的小毛病，人无完人。", s: 2 },
-            { text: "觉得那些缺点反而构成了TA真实可爱的一部分。", s: 3 },
-            { text: "在我的滤镜下，TA的缺陷是某种迷人的特权，我甚至陶醉于TA对我的这种不完美。", s: 4 }
-        ]},
-        { dim: "halo", q: "当所有朋友都极其客观地向你指出，TA其实配不上你，或者是个渣人时：", opts: [
-            { text: "会立刻把朋友的话听进去，开始清醒评估。", s: 1 },
-            { text: "表面辩解，但心里其实已经种下了怀疑的种子。", s: 2 },
-            { text: "觉得朋友根本不懂TA，极力反驳。", s: 3 },
-            { text: "觉得人类的世俗标准根本无法衡量TA。就算与全世界为敌，我也只要TA。", s: 4 }
-        ]},
-        { dim: "halo", q: "如果有另一个在颜值、财富、情绪价值上都如同完美机器般超越TA的人疯狂追求你：", opts: [
-            { text: "立刻被吸引，开始考虑换人。", s: 1 },
-            { text: "内心疯狂动摇，在道德和欲望中挣扎。", s: 2 },
-            { text: "也许会有一瞬虚荣，但最终还是坚定选择TA。", s: 3 },
-            { text: "毫无波澜。因为我迷恋的是TA这个人带来的‘特定质感与痛感’，完美机器毫无意义。", s: 4 }
-        ]},
-        { dim: "halo", q: "如果用一个意象来形容TA在你生命宇宙里的位置：", opts: [
-            { text: "一个同行过一段路的旅伴。", s: 1 },
-            { text: "一个让我感到舒适的避风港。", s: 2 },
-            { text: "黑夜里指引我前行的唯一灯塔。", s: 3 },
-            { text: "宇宙中心的黑洞。失去TA，我整个世界的引力都会瞬间崩溃。", s: 4 }
-        ]},
-        { dim: "halo", q: "当你看到TA做着最平庸、最无聊的日常琐事（比如发呆、抠指甲）时：", opts: [
-            { text: "觉得确实很无聊，没什么好看的。", s: 1 },
-            { text: "觉得这就是普通人的样子。", s: 2 },
-            { text: "觉得很温馨，有一种生活的烟火气。", s: 3 },
-            { text: "像在欣赏一件神圣的艺术品，就算TA什么都不做，我也能看上几个小时。", s: 4 }
-        ]},
-        { dim: "halo", q: "对于TA在工作或生活中的失败和落魄，你眼中的TA是：", opts: [
-            { text: "光环碎了一地，觉得TA不过如此。", s: 1 },
-            { text: "客观承认TA能力不足，但表示同情。", s: 2 },
-            { text: "心疼TA的遭遇，想帮TA重新站起来。", s: 3 },
-            { text: "一种悲剧美感。就算TA沦为废人，在我眼里依然是落难的神明。", s: 4 }
-        ]},
-        { dim: "halo", q: "你觉得你究竟是爱TA真实的样子，还是爱上了你幻想出来的那个TA？", opts: [
-            { text: "我只看重TA目前能提供给我的现实价值。", s: 1 },
-            { text: "我爱的是TA身上符合我择偶标准的部分。", s: 2 },
-            { text: "我爱TA真实的样子，好坏我都接受。", s: 3 },
-            { text: "我已经分不清了。我亲手为TA镀上金身，然后自己跪下成为了最狂热的信徒。", s: 4 }
-        ]},
-        { dim: "halo", q: "TA随口说的一句极其普通的承诺或赞美，在你的系统里：", opts: [
-            { text: "听听就过，不当真。", s: 1 },
-            { text: "会开心一下，但过几天就忘了。", s: 2 },
-            { text: "会珍藏在心里，时不时拿出来回味。", s: 3 },
-            { text: "犹如刻在骨头上的圣旨，足以支撑我度过漫长且绝望的岁月。", s: 4 }
-        ]},
+const levels = [
+  {
+    min:0, max:29, name:'浅海微光', color:'#90caf9', gradient:'linear-gradient(135deg,#90caf9,#e3f2fd)',
+    depth:'0-200m · 透光层',
+    subtitle:'你们的故事才刚刚开始',
+    desc:'你对TA有好感，有喜欢的成分在，但感情还没有真正扎根。这个阶段就像海面上的阳光——明亮、温暖、让人愉悦，但还没有深入到海水的内部。<br><br>这不是坏事。<strong>不是所有感情都需要是深海。</strong>也许你们需要更多时间，也许你心里清楚这段关系的位置。',
+    insight:'你的得分在情感浓度上偏低，说明TA还没有成为你"无法不想到的人"。可以问问自己：是还没到时候，还是心里已经有了答案？'
+  },
+  {
+    min:30, max:49, name:'中海暖流', color:'#4fc3f7', gradient:'linear-gradient(135deg,#4fc3f7,#b3e5fc)',
+    depth:'200-1000m · 中层带',
+    subtitle:'温热的感情，正在生长',
+    desc:'你对TA的感觉超越了简单的好感——TA已经占据了你生活中一个重要的位置。你会想到TA，会在意TA，愿意为TA调整一些东西。<br><br>但你的爱里还保留着比较强的<strong>理性成分和自我保护</strong>。你没有完全"掉进去"。这可能是因为你本身就是这样的性格，也可能是你在等一个让你确认"就是TA了"的时刻。',
+    insight:'你在亲密信任和唯一性认知上还有探索空间。试着问自己：我有没有什么东西是还没让TA看到的？不是刻意要藏，而是还没找到那个可以展开的安全时刻。'
+  },
+  {
+    min:50, max:69, name:'深海恒温', color:'#ab47bc', gradient:'linear-gradient(135deg,#ab47bc,#e1bee7)',
+    depth:'1000-4000m · 深海层',
+    subtitle:'稳定而深沉的温度',
+    desc:'这是一份真实的、有质量的感情。你不只是喜欢TA——你<strong>认识TA</strong>。你看到了TA的好，也看到了TA不那么好的部分，你的选择不是建立在滤镜上的。<br><br>你们之间有信任的基础，有共同的记忆，有只属于两个人的世界。这个温度区间的感情最大的特点是<strong>稳定</strong>——不是没有波动，而是波动之后你还是想留在这里。',
+    insight:'你的得分说明你在关系中是一个<strong>成熟的参与者</strong>。你可能在某个维度上特别突出，而在另一个维度上有意识地保持了距离——这不是缺陷，而是你的方式。看看四维图谱，你最低的那个维度也许就是下一步可以尝试打开的方向。'
+  },
+  {
+    min:70, max:84, name:'海渊灼热', color:'#ef5350', gradient:'linear-gradient(135deg,#ef5350,#ffcdd2)',
+    depth:'4000-6000m · 深渊层',
+    subtitle:'罕见的深层热源',
+    desc:'你对TA的感情已经进入了很深的水域。这里的"深"不是指激烈——而是指你的爱已经<strong>渗透进了你看世界的方式</strong>。TA不只是你的恋人，TA是你思考"未来"时自动出现的人，是你定义"安全"时的第一参照物。<br><br>更重要的是，你的爱里有<strong>清醒</strong>。你不是盲目的——你知道TA的缺点，你经历过关系里的难，但你做了一个有分量的选择：留下来。',
+    insight:'到了这个深度，需要注意的反而是<strong>不要忘记自己</strong>。你为这段关系投入了很多——确保你在这份爱里没有丢失自己独处时也能完整的那个部分。最深的关系是两个完整的人选择在一起，而不是两个人拼成一个完整。'
+  },
+  {
+    min:85, max:100, name:'深渊热泉', color:'#ff8a65', gradient:'linear-gradient(135deg,#ff6f00,#ff8a65,#ffd54f)',
+    depth:'6000m+ · 超深渊带',
+    subtitle:'极少数人能抵达的温度',
+    desc:'在海洋最深处，有一种叫<strong>热液喷泉</strong>的现象——周围是接近冰点的海水，但喷泉口的温度可以超过400°C，并且在这种极端环境下，依然有生命在生长。<br><br>你的感情就是这种存在。你对TA的爱<strong>经过了高压、黑暗和寒冷的考验，依然是热的</strong>。你同时拥有深沉的情感浓度、清醒的唯一性认知、被验证过的信任、以及不回避现实的承诺。<br><br>这个分数不代表你的关系是完美的——它代表<strong>你爱一个人的方式是成熟的、罕见的、值得珍惜的</strong>。',
+    insight:'你已经不需要建议了。但如果一定要说一句：<strong>记得告诉TA</strong>。不是用这个测试的分数——而是用你自己的方式。有些东西，对方可能知道，但再听一次还是会心动。'
+  }
+];// ===================== 状态 & 存储 =====================
+let currentQ = 0;
+let answers = new Array(questions.length).fill(null);
+const STORAGE_PROGRESS = 'deepsea_progress';
+const STORAGE_HISTORY = 'deepsea_history';
 
-        // --- 维度四：痛觉承载 (Pain) ---
-        { dim: "pain", q: "如果TA因为某种原因（非背叛），需要你漫长地等待三年，且不给任何承诺：", opts: [
-            { text: "直接拒绝，我的时间绝不耗在未知里。", s: 1 },
-            { text: "试着等几个月，看不到希望就算了。", s: 2 },
-            { text: "会努力等待，虽然过程会充满煎熬和动摇。", s: 3 },
-            { text: "平静地接受。只要终点是TA，三年或者三十年，不过是数字而已。", s: 4 }
-        ]},
-        { dim: "pain", q: "当TA用极其冷漠或带刺的态度伤害了你，你躲在角落流泪时的心理活动是：", opts: [
-            { text: "觉得这个人太差劲了，必须立刻止损离开。", s: 1 },
-            { text: "感到极度委屈，等TA来道歉否则绝不理TA。", s: 2 },
-            { text: "虽然很气，但还是反思是不是自己也有问题。", s: 3 },
-            { text: "即便被刺得血肉模糊，只要TA此时招招手，我依然会像献祭般爬向TA。", s: 4 }
-        ]},
-        { dim: "pain", q: "如果可以有一种超能力，能把TA身上的重病或绝望痛苦完全转移到你身上：", opts: [
-            { text: "绝对不干，各人有各人的命。", s: 1 },
-            { text: "帮忙分担一点点可以，全部不行。", s: 2 },
-            { text: "在TA濒危时，愿意替TA承受一半。", s: 3 },
-            { text: "毫不犹豫地全部拿过来，看着TA安好，我遭受凌迟也觉得满足。", s: 4 }
-        ]},
-        { dim: "pain", q: "当你被TA极度误解，且TA根本不给你解释的机会时，你的痛苦来源于：", opts: [
-            { text: "自尊心受挫，觉得TA太不讲理了。", s: 1 },
-            { text: "觉得委屈，为什么TA不能相信我。", s: 2 },
-            { text: "害怕这种误解会导致关系的破裂。", s: 3 },
-            { text: "不在乎自尊被踩踏，只恐惧TA眼中对我流露出的哪怕一丝厌恶。", s: 4 }
-        ]},
-        { dim: "pain", q: "如果你明知道和TA继续走下去，前方是万丈深渊，注定粉身碎骨：", opts: [
-            { text: "立刻踩刹车，我绝对不会拿自己的人生开玩笑。", s: 1 },
-            { text: "走到悬崖边缘前最后一刻果断跳车。", s: 2 },
-            { text: "充满恐惧，但还是闭着眼睛被TA拖着走了一段。", s: 3 },
-            { text: "就算清醒地看着深渊，我也会牵着TA的手，以最惨烈的姿态跳下去。", s: 4 }
-        ]},
-        { dim: "pain", q: "当你们陷入长达数天的冷战，谁也不理谁时，你的状态：", opts: [
-            { text: "无所谓，正好去跟朋友聚会打游戏。", s: 1 },
-            { text: "觉得有点闷，但也能正常生活工作。", s: 2 },
-            { text: "每天强颜欢笑，但内心像被掏空了一块。", s: 3 },
-            { text: "犹如遭受钝刀子割肉，连呼吸都带着痛感，最终永远是我先崩溃投降。", s: 4 }
-        ]},
-        { dim: "pain", q: "如果有一天TA决绝地转身离开，留给你的后遗症会是：", opts: [
-            { text: "睡个好觉，明天就能开启下一段寻找。", s: 1 },
-            { text: "伤心几个月，然后重新回归正常轨道。", s: 2 },
-            { text: "永远留下一道疤，以后爱别人都会有所保留。", s: 3 },
-            { text: "彻底的精神死亡。我将变成一副空壳，此生再无力气对任何人燃起星火。", s: 4 }
-        ]},
-        { dim: "pain", q: "归根结底，你觉得在这段关系里，你为什么不愿意走？", opts: [
-            { text: "因为目前TA给的条件还能满足我的需求。", s: 1 },
-            { text: "因为习惯了，重新认识一个人太麻烦。", s: 2 },
-            { text: "因为我舍不得那些曾经美好的回忆。", s: 3 },
-            { text: "因为我知道，离开TA带来的痛，远比留在TA身边受折磨要恐怖一万倍。", s: 4 }
-        ]}
-    ];
+const depthLabels = [
+  {from:0, to:5, label:'海面层 · 0-200m'},
+  {from:6, to:11, label:'中层带 · 200-1000m'},
+  {from:12, to:17, label:'深海层 · 1000-4000m'},
+  {from:18, to:23, label:'深渊层 · 4000-6000m'},
+  {from:24, to:25, label:'超深渊带 · 6000m+'}
+];
 
-    let currentQ = 0;
-    let scores = { ego: 0, obsess: 0, halo: 0, pain: 0 };
-    let answerHistory = []; // 存储历史答题记录，用于回退
-
-    function switchScreen(hideId, showId) {
-        document.getElementById(hideId).classList.remove('active');
-        setTimeout(() => document.getElementById(showId).classList.add('active'), 400);
+// ===================== 粒子背景 =====================
+function initParticles() {
+  const canvas = document.getElementById('particles-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+  function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random()*w; this.y = Math.random()*h;
+      this.r = Math.random()*2+0.5; this.vx = (Math.random()-0.5)*0.3;
+      this.vy = Math.random()*0.3+0.1; this.alpha = Math.random()*0.4+0.1;
+      this.color = ['#4fc3f7','#81d4fa','#b3e5fc','#e0f7fa'][Math.floor(Math.random()*4)];
     }
+    update() { this.x+=this.vx; this.y+=this.vy; if(this.y>h+10){this.reset();this.y=-10;} if(this.x<-10||this.x>w+10)this.reset(); }
+    draw() { ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=this.color; ctx.globalAlpha=this.alpha; ctx.fill(); ctx.globalAlpha=1; }
+  }
+  for(let i=0;i<60;i++) particles.push(new Particle());
+  function animate() { ctx.clearRect(0,0,w,h); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate); }
+  animate();
+}
 
-    function startTest() {
-        currentQ = 0;
-        scores = { ego: 0, obsess: 0, halo: 0, pain: 0 };
-        answerHistory = [];
-        document.getElementById('progressText').style.color = "var(--primary)";
-        switchScreen('screen-welcome', 'screen-question');
-        renderQuestion();
-        
-        // 绑定键盘快捷键
-        document.addEventListener('keydown', handleKeydown);
+// ===================== 进度存取 =====================
+function saveProgress() {
+  const data = { currentQ, answers, timestamp: Date.now() };
+  try { localStorage.setItem(STORAGE_PROGRESS, JSON.stringify(data)); } catch(e){}
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_PROGRESS);
+    if(raw) { const d = JSON.parse(raw); currentQ = d.currentQ||0; answers = d.answers||new Array(questions.length).fill(null); }
+  } catch(e) { currentQ=0; answers.fill(null); }
+}
+
+function getProgressInfo() {
+  try {
+    const raw = localStorage.getItem(STORAGE_PROGRESS);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    const answered = d.answers.filter(a=>a!==null).length;
+    if(answered===0) return null;
+    return { answered, total:questions.length, timestamp:d.timestamp };
+  } catch(e) { return null; }
+}
+
+// ===================== 历史存取 =====================
+function saveResult(total, levelName, dims) {
+  try {
+    const h = getHistory();
+    h.unshift({
+      total, level:levelName, dims,
+      date: new Date().toLocaleDateString('zh-CN'),
+      time: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),
+      timestamp: Date.now()
+    });
+    if(h.length>10) h.pop();
+    localStorage.setItem(STORAGE_HISTORY, JSON.stringify(h));
+  } catch(e){}
+}
+
+function getHistory() {
+  try { const raw=localStorage.getItem(STORAGE_HISTORY); return raw?JSON.parse(raw):[]; } catch(e){return[];}
+}
+
+function clearHistory() {
+  if(confirm('确定要清除全部历史记录吗？')) {
+    localStorage.removeItem(STORAGE_HISTORY);
+    refreshHome();
+  }
+}
+
+// ===================== 首页刷新 =====================
+function refreshHome() {
+  // 继续按钮
+  const prog = getProgressInfo();
+  const cb = document.getElementById('continueBtn');
+  const ch = document.getElementById('continueHint');
+  if(prog) {
+    cb.style.display='block'; ch.style.display='block';
+    ch.textContent = '已完成 '+prog.answered+'/'+prog.total+' 题';
+  } else {
+    cb.style.display='none'; ch.style.display='none';
+  }
+
+  // 历史记录
+  const history = getHistory();
+  const sec = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if(history.length > 0) {
+    sec.style.display='block';
+    list.innerHTML='';
+    history.forEach(h => {
+      const card = document.createElement('div');
+      card.className='history-card';
+      card.innerHTML = '<div class="history-left"><span class="history-level">'+h.level+'</span><span class="history-date">'+h.date+' '+h.time+'</span></div><span class="history-temp">'+h.total+'°</span>';
+      list.appendChild(card);
+    });
+  } else {
+    sec.style.display='none';
+  }
+}
+
+// ===================== 页面切换 =====================
+function showPage(id) {
+  ['startPage','quizPage','resultPage'].forEach(p => {
+    const el = document.getElementById(p);
+    if(p === 'startPage') el.style.display = (p===id?'flex':'none');
+    else { if(p===id) el.classList.add('active'); else el.classList.remove('active'); }
+  });
+}
+
+function goHome() {
+  showPage('startPage');
+  refreshHome();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ===================== 开始 / 继续测试 =====================
+function startQuiz(isNew) {
+  if(isNew) { currentQ=0; answers.fill(null); localStorage.removeItem(STORAGE_PROGRESS); }
+  else { loadProgress(); }
+  showPage('quizPage');
+  renderQuestion();
+}
+
+// ===================== 答题逻辑 =====================
+function renderQuestion() {
+  const q = questions[currentQ];
+  const pct = ((currentQ)/questions.length*100).toFixed(0);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = (currentQ+1)+' / '+questions.length;
+  const dl = depthLabels.find(d=>currentQ>=d.from&&currentQ<=d.to);
+  document.getElementById('depthIndicator').textContent = '▼ '+(dl?dl.label:'');
+  document.getElementById('questionDim').textContent = q.dimLabel;
+  document.getElementById('questionText').textContent = q.text;
+
+  const labels = ['A','B','C','D'];
+  const area = document.getElementById('optionsArea');
+  area.innerHTML='';
+  q.options.forEach((opt,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn'+(answers[currentQ]===i?' selected':'');
+    btn.innerHTML = '<span class="option-label">'+labels[i]+'</span><span>'+opt.text+'</span>';
+    btn.onclick = () => selectOption(i);
+    area.appendChild(btn);
+  });
+
+  document.getElementById('prevBtn').disabled = (currentQ===0);
+  const nb = document.getElementById('nextBtn');
+  nb.textContent = (currentQ===questions.length-1)?'查看结果':'下一题';
+  nb.disabled = (answers[currentQ]===null);
+}
+
+function selectOption(idx) {
+  answers[currentQ] = idx;
+  document.querySelectorAll('.option-btn').forEach((b,i)=>b.classList.toggle('selected',i===idx));
+  document.getElementById('nextBtn').disabled = false;
+  saveProgress();
+}
+
+function nextQuestion() {
+  if(answers[currentQ]===null) return;
+  if(currentQ<questions.length-1) { currentQ++; saveProgress(); renderQuestion(); window.scrollTo({top:0,behavior:'smooth'}); }
+  else { showResult(); }
+}
+
+function prevQuestion() {
+  if(currentQ>0) { currentQ--; saveProgress(); renderQuestion(); window.scrollTo({top:0,behavior:'smooth'}); }
+}
+
+// ===================== 计算分数 =====================
+function calcScores() {
+  const dims={I:0,S:0,T:0,C:0}, maxDims={I:0,S:0,T:0,C:0};
+  questions.forEach((q,qi)=>{
+    const chosen=answers[qi]; if(chosen===null) return;
+    const sc=q.options[chosen].score;
+    const qMax={};
+    q.options.forEach(opt=>{ for(let d in opt.score){ if(!qMax[d]||opt.score[d]>qMax[d]) qMax[d]=opt.score[d]; }});
+    for(let d in sc){ dims[d]=(dims[d]||0)+sc[d]; maxDims[d]=(maxDims[d]||0)+(qMax[d]||0); }
+  });
+  const norm={}; let total=0;
+  for(let d in dims){ norm[d]=maxDims[d]>0?Math.round((dims[d]/maxDims[d])*25):0; total+=norm[d]; }
+  return {dims:norm,total};
+}
+
+// ===================== 显示结果 =====================
+function showResult() {
+  showPage('resultPage');
+  const {dims,total} = calcScores();
+  const level = levels.find(l=>total>=l.min&&total<=l.max)||levels[0];
+
+  animateNumber(document.getElementById('tempDisplay'),0,total,1500);
+
+  setTimeout(()=>{
+    const fill=document.getElementById('thermoFill');
+    fill.style.background=level.gradient; fill.style.width=total+'%';
+  },200);
+
+  const badge=document.getElementById('levelBadge');
+  badge.textContent=level.name; badge.style.background=level.gradient;
+  badge.style.color=total>60?'#fff':'#0a0e27';
+  document.getElementById('levelSubtitle').textContent=level.depth+' — '+level.subtitle;
+
+  const dimMap={I:'dimI',S:'dimS',T:'dimT',C:'dimC'};
+  const scoreMap={I:'dimIScore',S:'dimSScore',T:'dimTScore',C:'dimCScore'};  setTimeout(()=>{
+    for(let d in dimMap){
+      document.getElementById(dimMap[d]).style.width=(dims[d]*4)+'%';
+      document.getElementById(scoreMap[d]).textContent=dims[d];
     }
+  },500);
 
-    function handleKeydown(e) {
-        if (document.getElementById('screen-question').classList.contains('active')) {
-            const key = e.key;
-            if (['1', '2', '3', '4'].includes(key)) {
-                const q = questions[currentQ];
-                if (q && q.opts[key - 1]) {
-                    selectOpt(q.dim, q.opts[key - 1].s);
-                }
-            }
-        }
-    }
+  document.getElementById('resultDesc').innerHTML=level.desc;
+  document.getElementById('insightBox').innerHTML=level.insight;
 
-    function renderQuestion() {
-        if (currentQ >= questions.length) {
-            document.removeEventListener('keydown', handleKeydown);
-            finishTest();
-            return;
-        }
-        
-        const progress = (currentQ / questions.length) * 100;
-        document.getElementById('progressBar').style.width = `${progress}%`;
-        document.getElementById('progressText').innerText = `${currentQ + 1} / ${questions.length}`;
+  // 保存结果到历史
+  saveResult(total, level.name, dims);
+  // 清除进度（已完成）
+  localStorage.removeItem(STORAGE_PROGRESS);
 
-        const q = questions[currentQ];
-        const qContainer = document.getElementById('screen-question');
-        
-        // 控制返回按钮的显示与隐藏
-        const backBtn = document.getElementById('backBtn');
-        backBtn.style.display = currentQ > 0 ? 'block' : 'none';
-        
-        qContainer.style.opacity = 0;
-        qContainer.style.transform = "translateY(15px)";
-        
-        setTimeout(() => {
-            document.getElementById('questionNum').innerText = `Q.${(currentQ + 1).toString().padStart(2, '0')}`;
-            document.getElementById('questionText').innerText = q.q;
-            let optsHtml = '';
-            q.opts.forEach((opt, idx) => {
-                const delay = idx * 0.1; // 级联动画延迟
-                optsHtml += `<div class="opt-btn animate-in" style="animation-delay: ${delay}s" onclick="selectOpt('${q.dim}', ${opt.s})">
-                                <span class="opt-key">${idx + 1}</span>${opt.text}
-                             </div>`;
-            });
-            document.getElementById('optionsContainer').innerHTML = optsHtml;
-            
-            qContainer.style.opacity = 1;
-            qContainer.style.transform = "translateY(0)";
-        }, 300);
-    }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
-    function selectOpt(dim, score) {
-        // 记录历史
-        answerHistory.push({ dim: dim, score: score });
-        scores[dim] += score;
-        currentQ++;
-        renderQuestion();
-    }
-    
-    function goBack() {
-        if (currentQ > 0) {
-            const lastAnswer = answerHistory.pop(); // 弹出最后一次操作
-            scores[lastAnswer.dim] -= lastAnswer.score; // 撤销分数
-            currentQ--; // 题目回退
-            renderQuestion(); // 重新渲染
-        }
-    }
+// ===================== 数字动画 =====================
+function animateNumber(el,from,to,duration) {
+  const start=performance.now();
+  function tick(now) {
+    const p=Math.min((now-start)/duration,1);
+    const eased=1-Math.pow(1-p,3);
+    el.textContent=Math.round(from+(to-from)*eased);
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
 
-    function finishTest() {
-        document.getElementById('progressBar').style.width = '100%';
-        document.getElementById('progressText').innerText = `COMPLETED`;
-        switchScreen('screen-question', 'screen-loading');
-        
-        const loadTexts = [
-            "正在读取潜意识深度...", 
-            "正在测量自我溶解阈值...", 
-            "正在解构痛觉承载力...", 
-            "深渊镜像已锁定。"
-        ];
-        let c = 0;
-        const txtInterval = setInterval(() => {
-            c++;
-            if(c < loadTexts.length) {
-                document.getElementById('loadingText').innerText = loadTexts[c];
-            }
-        }, 800);
+// ===================== 重新测试 =====================
+function restart() {
+  currentQ=0; answers.fill(null);
+  localStorage.removeItem(STORAGE_PROGRESS);
+  showPage('quizPage');
+  renderQuestion();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 
-        setTimeout(() => {
-            clearInterval(txtInterval);
-            calculateLevel();
-            switchScreen('screen-loading', 'screen-result');
-        }, 3500);
-    }
-
-    function calculateLevel() {
-        const totalScore = scores.ego + scores.obsess + scores.halo + scores.pain;
-        let res = {};
-
-        if (totalScore >= 116) {
-            res = {
-                temp: "10000℃", title: "【致命核爆 · 彻底献祭】",
-                quote: "“每一个细胞都在叫嚣着你的名字，没有你，我只是一具行尸走肉。”",
-                desc: "最高级别的狂热，理智已经灰飞烟灭。TA成为了你世界的绝对主宰和唯一信仰。为你生、为你死、为你与世界为敌。如果没有TA，你的精神宇宙会瞬间坍塌成黑洞。你交出了所有的底线，病态的占有欲、极端的痛觉承载力和厚到无法穿透的神性滤镜，共同构成了这场绚烂到极致的灾难。",
-                shadow: "你把TA捧上了神坛，自己却低到了尘埃里。这种没有底线的狂热和彻底的自我毁灭，一旦遭遇背叛或对方哪怕一丝的冷落，带给你的都将是不可逆的精神粉碎。你正在玩一场只有一条命的俄罗斯轮盘赌。"
-            };
-        } else if (totalScore >= 96) {
-            res = {
-                temp: "100℃", title: "【刻骨深爱 · 灵魂交托】",
-                quote: "“我已经做好了与你共担风雨的准备，并且甘之如饴。”",
-                desc: "你已经彻底跨过了那条线，这就是毫无疑问的深爱。你接纳了TA的阴暗面与不完美，把TA写进了未来的每一个计划里。为了TA，你愿意退让重要的底线，愿意承受漫长的等待和刺骨的痛苦。你的自我边界已经开始消融，TA的悲伤会直接引发你的躯体疼痛。",
-                shadow: "极高的痛觉承载力让你陷入了“自我感动式的牺牲”。你总是愿意先低头、先原谅。这种沉甸甸的爱，如果遇到一个不懂得珍惜的人，极易让关系滑向单向的索取与剥削。"
-            };
-        } else if (totalScore >= 76) {
-            res = {
-                temp: "70℃", title: "【沦陷边缘 · 疯狂拉扯】",
-                quote: "“理智在向我发出红色警报，但目光依然不自觉地追随你。”",
-                desc: "警告，你的理智防线正在被全面攻破。你发现自己开始不受控制地想起TA，情绪开始被TA的每一个标点符号牵动。占有欲和嫉妒心开始作祟，你在“清醒的自我保护”和“放纵的心动”之间疯狂拉扯。爱意正在以不可阻挡的势头向深渊蔓延。",
-                shadow: "这是最折磨人的内耗期。你既做不到洒脱地转身，也做不到彻底的献祭。卡在“抽身”与“沉沦”之间的纠结，会极大地消耗你的生命力，让你变得患得患失、神经质。"
-            };
-        } else if (totalScore >= 51) {
-            res = {
-                temp: "37℃", title: "【好感微光 · 理智赏玩】",
-                quote: "“你确实有些迷人，但这并不妨碍我随时转身离去。”",
-                desc: "你对TA有一点好奇或欣赏，但这仅仅停留在表层的阶段。多巴胺微微分泌，但理智的闸门关得死死的。你愿意花时间陪伴，但在你心里，始终有一条清晰的红线——你爱TA，但你永远更爱自己。",
-                shadow: "这种“进可攻、退可守”的状态固然安全无害，但在对方眼里，你永远留着一条随时撤离的后路。过分的清醒和算计，注定了你在这段关系中很难体会到真正触及灵魂的心动。"
-            };
-        } else {
-            res = {
-                temp: "0℃", title: "【绝对免疫 · 宛如路人】",
-                quote: "“你只是途经我生命的一个名字，与旁边的树木无异。”",
-                desc: "恭喜你，你的内心波澜不惊。TA对你而言，就是一个随时可以被替换的NPC。就算TA明天从你的世界里彻底消失，你的心跳也不会漏拍哪怕半秒。完全的物理与心理隔离，没有任何神性滤镜，你对TA展现出了极致的冷酷。",
-                shadow: "其实根本谈不上什么危机，因为你根本不在乎。唯一需要警惕的是，如果你在这种状态下依然选择与对方维持着某种名义上的关系，那这对TA而言，无异于一场残忍的凌迟。"
-            };
-        }
-
-        document.getElementById('resTemp').innerText = res.temp;
-        if(totalScore >= 96) document.getElementById('resTemp').style.color = "var(--primary)";
-        
-        document.getElementById('resTitle').innerText = res.title;
-        document.getElementById('resQuote').innerText = res.quote;
-        
-        drawRadar(scores);
-        
-        typeWriter(document.getElementById('textDesc'), res.desc, 0);
-        setTimeout(() => typeWriter(document.getElementById('textShadow'), res.shadow, 0), res.desc.length * 35 + 600);
-    }
-
-    function typeWriter(element, text, index) {
-        if (index === 0) { element.innerHTML = ''; element.classList.add('cursor'); }
-        if (index < text.length) {
-            element.innerHTML += text.charAt(index);
-            setTimeout(() => typeWriter(element, text, index + 1), 30);
-        } else {
-            element.classList.remove('cursor');
-        }
-    }
-
-    function drawRadar(scores) {
-        const ctx = document.getElementById('radarChart').getContext('2d');
-        if (window.radarInstance) window.radarInstance.destroy();
-        Chart.defaults.color = 'rgba(255, 255, 255, 0.5)';
-        
-        window.radarInstance = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['自我溶解', '意念穿透', '神性滤镜', '痛觉承载'],
-                datasets: [{
-                    data: [scores.ego, scores.obsess, scores.halo, scores.pain],
-                    backgroundColor: 'rgba(196, 60, 60, 0.25)',
-                    borderColor: '#c43c3c', borderWidth: 2,
-                    pointBackgroundColor: '#fff', pointRadius: 4, pointHoverRadius: 6
-                }]
-            },
-            options: {
-                scales: {
-                    r: {
-                        min: 8, max: 32,
-                        ticks: { display: false, stepSize: 6 },
-                        grid: { color: 'rgba(255,255,255,0.06)' },
-                        angleLines: { color: 'rgba(196, 60, 60, 0.3)' },
-                        pointLabels: { font: { size: 13, family: "'Noto Serif SC', serif", weight: '600' }, color: '#d1d1d1' }
-                    }
-                },
-                plugins: { legend: { display: false } },
-                maintainAspectRatio: false
-            }
-        });
-    }
+// ===================== 初始化 =====================
+window.addEventListener('DOMContentLoaded', () => {
+  initParticles();
+  refreshHome();
+});
 </script>
 </body>
 </html>
